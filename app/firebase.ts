@@ -10,8 +10,5 @@ const firebaseConfig = {
   appId: "1:1063118514750:web:3df30469ee8f37479d3f6f"
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-
-// Initialize Realtime Database and export it
 export const db = getDatabase(app);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-// Firebase imports
+// Firebase imports - Ensuring these are below "use client"
 import { db } from './firebase';
 import { ref, set } from "firebase/database";
 
@@ -39,15 +39,14 @@ export default function WomenSafetyApp() {
           setLocation({ lat: latitude, lng: longitude });
           setStatus("ALERT SENT: Trusted contacts notified.");
           
-          // --- NEW: SEND TO FIREBASE ---
-          // This saves the alert data to your database under 'alerts/user1'
+          // --- SEND TO FIREBASE ---
+          // Using 'user1' as a placeholder ID
           set(ref(db, 'alerts/' + 'user1'), {
             location: { lat: latitude, lng: longitude },
             status: "EMERGENCY",
             time: new Date().toLocaleString(),
             battery: battery
           });
-          // -----------------------------
         },
         () => setStatus("Error: Please enable GPS")
       );
@@ -86,7 +85,6 @@ export default function WomenSafetyApp() {
       {/* Main SOS Button Section */}
       <div className="flex-1 flex flex-col items-center justify-center w-full">
         <div className="relative">
-          {/* Animated Pulse Effect */}
           <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-20"></div>
           <button 
             onClick={triggerSOS}
@@ -96,7 +94,6 @@ export default function WomenSafetyApp() {
           </button>
         </div>
         
-        {/* Status Dashboard */}
         <div className="mt-12 bg-white px-8 py-4 rounded-3xl shadow-xl border border-slate-100 text-center w-full max-w-sm">
           <p className="text-slate-800 font-bold text-lg">{status}</p>
           {location && (
@@ -116,7 +113,6 @@ export default function WomenSafetyApp() {
           )}
         </div>
 
-        {/* Feature: Fake Call Button */}
         <button 
           onClick={triggerFakeCall}
           className="mt-6 text-slate-400 text-[10px] font-bold tracking-widest uppercase hover:text-red-500 transition-colors border-b border-slate-200"
