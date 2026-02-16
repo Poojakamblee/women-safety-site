@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-// Firebase imports - Ensuring these are below "use client"
-import { db } from './firebase';
+// Firebase imports - Notice 'db' has no curly braces
+import db from './firebase'; 
 import { ref, set } from "firebase/database";
 
 export default function WomenSafetyApp() {
@@ -40,7 +40,7 @@ export default function WomenSafetyApp() {
           setStatus("ALERT SENT: Trusted contacts notified.");
           
           // --- SEND TO FIREBASE ---
-          // Using 'user1' as a placeholder ID
+          // This pushes your live location to the Google Cloud
           set(ref(db, 'alerts/' + 'user1'), {
             location: { lat: latitude, lng: longitude },
             status: "EMERGENCY",
@@ -53,7 +53,6 @@ export default function WomenSafetyApp() {
     }
   };
 
-  // FEATURE: Fake Call Trigger
   const triggerFakeCall = () => {
     setStatus("Fake Call incoming in 5s...");
     setTimeout(() => {
@@ -64,7 +63,6 @@ export default function WomenSafetyApp() {
 
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col items-center p-4 font-sans">
-      {/* Top Header */}
       <div className="w-full max-w-md flex justify-between items-center py-6">
         <div>
           <h1 className="text-2xl font-black text-red-600 tracking-tighter">SHESAFE</h1>
@@ -82,7 +80,6 @@ export default function WomenSafetyApp() {
         </button>
       </div>
 
-      {/* Main SOS Button Section */}
       <div className="flex-1 flex flex-col items-center justify-center w-full">
         <div className="relative">
           <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-20"></div>
@@ -121,7 +118,6 @@ export default function WomenSafetyApp() {
         </button>
       </div>
 
-      {/* Emergency Quick-Dial Grid */}
       <div className="w-full max-w-md grid grid-cols-2 gap-4 my-8">
         <a href="tel:112" className="bg-white p-5 rounded-2xl border border-slate-200 text-center shadow-sm hover:shadow-md transition-all active:bg-red-50">
           <p className="text-xs text-slate-400 uppercase font-black mb-1">Police</p>
@@ -133,7 +129,6 @@ export default function WomenSafetyApp() {
         </a>
       </div>
 
-      {/* Trusted Contacts Section */}
       <div className="w-full max-w-md bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mb-6">
         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Trusted Guardians</h3>
         <div className="space-y-3">
