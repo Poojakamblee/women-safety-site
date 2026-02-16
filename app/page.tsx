@@ -1,6 +1,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+// Firebase imports
+import { db } from './firebase';
+import { ref, set } from "firebase/database";
 
 export default function WomenSafetyApp() {
   const [status, setStatus] = useState("System Active");
@@ -35,7 +38,16 @@ export default function WomenSafetyApp() {
           const { latitude, longitude } = pos.coords;
           setLocation({ lat: latitude, lng: longitude });
           setStatus("ALERT SENT: Trusted contacts notified.");
-          // Internship Tip: Mention you'd use Twilio API here to send an actual SMS
+          
+          // --- NEW: SEND TO FIREBASE ---
+          // This saves the alert data to your database under 'alerts/user1'
+          set(ref(db, 'alerts/' + 'user1'), {
+            location: { lat: latitude, lng: longitude },
+            status: "EMERGENCY",
+            time: new Date().toLocaleString(),
+            battery: battery
+          });
+          // -----------------------------
         },
         () => setStatus("Error: Please enable GPS")
       );
