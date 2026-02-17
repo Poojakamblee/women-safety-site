@@ -2,9 +2,8 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { getDatabase } from "firebase/database";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBktWfHfWO55E5sFkQXtj lD05Gi8MtPxPo",
+  apiKey: "AIzaSyBktWfHfWO55E5sFkQXtjlD05Gi8MtPxPo",
   authDomain: "shesafe-alerts.firebaseapp.com",
-  // ADD THIS LINE BELOW:
   databaseURL: "https://shesafe-alerts-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "shesafe-alerts",
   storageBucket: "shesafe-alerts.firebasestorage.app",
