@@ -4,6 +4,8 @@ import { getDatabase } from "firebase/database";
 const firebaseConfig = {
   apiKey: "AIzaSyBktWfHfWO55E5sFkQXtj lD05Gi8MtPxPo",
   authDomain: "shesafe-alerts.firebaseapp.com",
+  // ADD THIS LINE BELOW:
+  databaseURL: "https://shesafe-alerts-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "shesafe-alerts",
   storageBucket: "shesafe-alerts.firebasestorage.app",
   messagingSenderId: "1063118514750",
@@ -15,5 +17,4 @@ const firebaseConfig = {
 const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-// Exporting as default to match your page.tsx import
 export default db;
