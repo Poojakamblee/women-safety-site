@@ -148,3 +148,9 @@ export default function WomenSafetyApp() {
     </main>
   );
 }
+<button 
+  onClick={() => window.location.href = "/guardian"}
+  className="mt-10 text-[8px] text-slate-300 hover:text-slate-500"
+>
+  Admin Access
+</button>
