@@ -1,71 +1,83 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import db from '../firebase'; 
+import { useState, useEffect } from "react";
+import db from "../firebase";
 import { ref, onValue } from "firebase/database";
 
 export default function GuardianDashboard() {
-  // Added <any> and specific types to stop VS Code errors
-  const [alertData, setAlertData] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [alerts, setAlerts] = useState<any>({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const alertRef = ref(db, 'alerts/user1');
+    const alertsRef = ref(db, "alerts");
 
-    const unsubscribe = onValue(alertRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setAlertData(snapshot.val());
-      } else {
-        setAlertData(null);
-      }
-      setLoading(false);
-    }, (error) => {
-      console.error(error);
+    // Listen for ALL changes in the alerts folder
+    const unsubscribe = onValue(alertsRef, (snapshot) => {
+      const data = snapshot.val();
+      setAlerts(data || {}); // Update state with all active alerts
       setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
+  // Convert the object of alerts into an array for easy mapping
+  const activeAlerts = Object.keys(alerts);
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
-        <p className="text-white font-bold animate-pulse">CONNECTING TO SECURE FEED...</p>
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
+        <p className="animate-pulse font-mono tracking-widest">CONNECTING TO SECURE FEED...</p>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-900 text-white p-6 font-sans">
-      <h1 className="text-xl font-black text-red-500 mb-6">GUARDIAN DASHBOARD</h1>
+    <main className="min-h-screen bg-slate-950 p-6 font-sans text-white">
+      <h1 className="text-red-500 font-black text-3xl mb-8 tracking-tighter">
+        GUARDIAN COMMAND CENTER
+      </h1>
 
-      {!alertData ? (
-        <div className="bg-slate-800 p-8 rounded-3xl text-center border border-slate-700">
-          <p className="text-slate-400">No active alerts. System is monitoring.</p>
+      {activeAlerts.length === 0 ? (
+        <div className="border-2 border-dashed border-slate-800 rounded-3xl p-20 text-center">
+          <p className="text-slate-500 font-bold uppercase tracking-widest">No Active Emergencies</p>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className={`p-6 rounded-3xl border-2 ${alertData.status === 'EMERGENCY' ? 'bg-red-950 border-red-600' : 'bg-green-950 border-green-600'}`}>
-            <p className="text-xs font-black uppercase tracking-widest opacity-70">Current Status</p>
-            <h2 className="text-3xl font-black mt-1">{alertData.status || 'ACTIVE'}</h2>
-            <p className="text-sm mt-2 font-mono opacity-80">Last Updated: {alertData.time}</p>
-          </div>
+        <div className="grid gap-6">
+          {activeAlerts.map((id) => {
+            const alert = alerts[id];
+            return (
+              <div key={id} className="bg-slate-900 border-l-8 border-red-600 rounded-2xl p-6 shadow-2xl animate-in fade-in slide-in-from-right duration-500">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h2 className="text-2xl font-black">{id}</h2>
+                    <p className="text-red-400 text-xs font-bold uppercase tracking-widest">STATUS: {alert.status}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-slate-500 font-mono">{alert.time}</p>
+                    <p className="text-green-500 font-bold text-sm">Battery: {alert.battery}%</p>
+                  </div>
+                </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-slate-800 p-4 rounded-2xl border border-slate-700">
-              <p className="text-[10px] text-slate-400 font-bold uppercase">Battery</p>
-              <p className="text-xl font-bold">{alertData.battery}%</p>
-            </div>
-            <a 
-              href={`https://www.google.com/maps?q=${alertData.location?.lat},${alertData.location?.lng}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-blue-600 p-4 rounded-2xl flex flex-col items-center justify-center hover:bg-blue-500 transition-colors"
-            >
-              <span className="text-[10px] font-bold text-white">OPEN MAPS</span>
-              <span className="text-lg">📍</span>
-            </a>
-          </div>
+                <div className="flex gap-4">
+                  <a
+                    href={`https://www.google.com/maps?q=${alert.location.lat},${alert.location.lng}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-center py-4 rounded-xl font-bold transition-colors"
+                  >
+                    📍 OPEN LIVE MAP
+                  </a>
+                  <a
+                    href={`tel:${alert.phone || ""}`} // Will work if you add a phone field
+                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-center py-4 rounded-xl font-bold transition-colors"
+                  >
+                    📞 CALL USER
+                  </a>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </main>

@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-// Firebase imports - db is exported as default from your firebase.ts
 import db from './firebase'; 
-import { ref, set } from "firebase/database";
+import { ref, set, onValue } from "firebase/database";
 
 export default function WomenSafetyApp() {
   const [status, setStatus] = useState("System Active");
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
   const [battery, setBattery] = useState<number | null>(null);
+  
+  // Multi-User Support: Assigns a random ID so users don't overwrite each other
+  const [userId] = useState(() => "User-" + Math.floor(1000 + Math.random() * 9000));
 
   // FEATURE: Discreet Mode (Hides the site if 'Esc' is pressed)
   useEffect(() => {
@@ -41,18 +43,32 @@ export default function WomenSafetyApp() {
           setLocation({ lat: latitude, lng: longitude });
           setStatus("ALERT SENT: Trusted contacts notified.");
           
-          // --- SEND TO FIREBASE ---
-          // This pushes your live location to the Google Cloud in Singapore
-          set(ref(db, 'alerts/user1'), {
+          // 1. UPDATE FIREBASE (Dynamic path using userId)
+          set(ref(db, `alerts/${userId}`), {
             location: { lat: latitude, lng: longitude },
             status: "EMERGENCY",
             time: new Date().toLocaleString(),
-            battery: currentBattery
+            battery: currentBattery,
+            userId: userId
           });
+
+          // 2. SMS TRIGGER (The "Easy Way")
+          // Replace +919999999999 with your Guardian's actual number
+          const message = `SOS! I need help. Location: https://www.google.com/maps?q=${latitude},${longitude}`;
+          window.location.href = `sms:+919999999999?body=${encodeURIComponent(message)}`;
         },
         () => setStatus("Error: Please enable GPS")
       );
     }
+  };
+
+  const clearSOS = () => {
+    // This removes your alert from the database
+    set(ref(db, `alerts/${userId}`), null); 
+    
+    setStatus("System Active - Safe");
+    setLocation(null);
+    alert("Guardian notified that you are safe.");
   };
 
   const triggerFakeCall = () => {
@@ -69,11 +85,9 @@ export default function WomenSafetyApp() {
       <div className="w-full max-w-md flex justify-between items-center py-6">
         <div>
           <h1 className="text-2xl font-black text-red-600 tracking-tighter">SHESAFE</h1>
-          {battery !== null && (
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-              Device Battery: {battery}%
-            </p>
-          )}
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">
+            ID: {userId} | Battery: {battery}%
+          </p>
         </div>
         <button 
           onClick={() => window.location.href = "https://www.google.com"}
@@ -95,21 +109,21 @@ export default function WomenSafetyApp() {
           </button>
         </div>
         
-        <div className="mt-12 bg-white px-8 py-4 rounded-3xl shadow-xl border border-slate-100 text-center w-full max-w-sm">
+        {/* New "I'M SAFE" Button */}
+        <button 
+          onClick={clearSOS}
+          className="mt-6 bg-green-500 text-white px-10 py-3 rounded-full font-bold shadow-lg hover:bg-green-600 active:scale-95 transition-all"
+        >
+          ✅ I AM SAFE
+        </button>
+
+        <div className="mt-8 bg-white px-8 py-4 rounded-3xl shadow-xl border border-slate-100 text-center w-full max-w-sm">
           <p className="text-slate-800 font-bold text-lg">{status}</p>
           {location && (
             <div className="mt-2 flex flex-col items-center">
               <p className="text-[10px] text-slate-400 font-mono">
                 COORD: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
               </p>
-              <a 
-                href={`https://www.google.com/maps?q=${location.lat},${location.lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 text-xs text-blue-600 font-bold bg-blue-50 px-3 py-1 rounded-full hover:bg-blue-100 transition-colors"
-              >
-                📍 VIEW ON GOOGLE MAPS
-              </a>
             </div>
           )}
         </div>
@@ -122,7 +136,7 @@ export default function WomenSafetyApp() {
         </button>
       </div>
 
-      {/* Emergency Links */}
+      {/* Emergency Contacts Table */}
       <div className="w-full max-w-md grid grid-cols-2 gap-4 my-8">
         <a href="tel:112" className="bg-white p-5 rounded-2xl border border-slate-200 text-center shadow-sm hover:shadow-md transition-all active:bg-red-50">
           <p className="text-xs text-slate-400 uppercase font-black mb-1">Police</p>
@@ -134,25 +148,6 @@ export default function WomenSafetyApp() {
         </a>
       </div>
 
-      {/* Guardians Status */}
-      <div className="w-full max-w-md bg-white p-6 rounded-3xl border border-slate-100 shadow-sm mb-6">
-        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Trusted Guardians</h3>
-        <div className="space-y-3">
-          <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
-            <span className="font-bold text-slate-700">Mom</span>
-            <span className="flex items-center text-[10px] font-bold text-green-600">
-              <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-              LIVE TRACKING
-            </span>
-          </div>
-          <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
-            <span className="font-bold text-slate-700">Brother</span>
-            <span className="text-[10px] font-bold text-slate-400">OFFLINE</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Admin Hidden Link */}
       <button 
         onClick={() => window.location.href = "/guardian"}
         className="mb-10 text-[10px] text-slate-300 hover:text-slate-500 font-bold tracking-widest"
