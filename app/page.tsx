@@ -11,11 +11,25 @@ export default function WomenSafetyApp() {
   const [userId] = useState(() => "User-" + Math.floor(1000 + Math.random() * 9000));
   const [trustedNumber, setTrustedNumber] = useState("");
   const [showInput, setShowInput] = useState(false);
+  
+  // DARK MODE STATE
+  const [darkMode, setDarkMode] = useState(false);
 
+  // Load preferences (Contact & Theme)
   useEffect(() => {
     const savedNumber = localStorage.getItem("shesafe_contact");
     if (savedNumber) setTrustedNumber(savedNumber);
+
+    const savedTheme = localStorage.getItem("shesafe_theme");
+    if (savedTheme === "dark") setDarkMode(true);
   }, []);
+
+  // Toggle Theme Function
+  const toggleTheme = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem("shesafe_theme", newMode ? "dark" : "light");
+  };
 
   const saveContact = () => {
     localStorage.setItem("shesafe_contact", trustedNumber);
@@ -32,32 +46,29 @@ export default function WomenSafetyApp() {
 
   const triggerSOS = () => {
     if (!trustedNumber) {
-      alert("Please add a trusted contact number first!");
+      alert("Please add a trusted contact first!");
       setShowInput(true);
       return;
     }
     setStatus("Fetching Location...");
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          setLocation({ lat: latitude, lng: longitude });
-          setStatus("ALERT SENT!");
-          
-          set(ref(db, `alerts/${userId}`), {
-            location: { lat: latitude, lng: longitude },
-            status: "EMERGENCY",
-            time: new Date().toLocaleString(),
-            battery: battery || 100,
-            userId: userId
-          });
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLocation({ lat: latitude, lng: longitude });
+        setStatus("ALERT SENT!");
+        
+        set(ref(db, `alerts/${userId}`), {
+          location: { lat: latitude, lng: longitude },
+          status: "EMERGENCY",
+          time: new Date().toLocaleString(),
+          battery: battery || 100,
+          userId: userId
+        });
 
-          const mapLink = `http://maps.google.com/?q=${latitude},${longitude}`;
-          const message = `🚨 SOS! I need help. My live location: ${mapLink}. Battery: ${battery}%`;
-          window.location.href = `sms:${trustedNumber}?body=${encodeURIComponent(message)}`;
-        },
-        () => setStatus("Error: Enable GPS")
-      );
+        const mapLink = `http://maps.google.com/?q=${latitude},${longitude}`;
+        const message = `🚨 SOS! I need help. My live location: ${mapLink}. Battery: ${battery}%`;
+        window.location.href = `sms:${trustedNumber}?body=${encodeURIComponent(message)}`;
+      });
     }
   };
 
@@ -68,9 +79,22 @@ export default function WomenSafetyApp() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 flex flex-col items-center p-4 font-sans text-slate-900">
-      <div className="w-full max-w-md py-6">
-        <h1 className="text-2xl font-black text-red-600 tracking-tighter">SHESAFE</h1>
+    // Dynamic background and text colors based on darkMode state
+    <main className={`min-h-screen transition-colors duration-500 flex flex-col items-center p-4 font-sans 
+      ${darkMode ? 'bg-slate-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
+      
+      {/* Header */}
+      <div className="w-full max-w-md flex justify-between items-center py-6">
+        <h1 className={`text-2xl font-black tracking-tighter ${darkMode ? 'text-red-500' : 'text-red-600'}`}>SHESAFE</h1>
+        
+        {/* THEME TOGGLE BUTTON */}
+        <button 
+          onClick={toggleTheme}
+          className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all
+            ${darkMode ? 'bg-slate-800 text-yellow-400' : 'bg-slate-200 text-slate-600'}`}
+        >
+          {darkMode ? '☀️ Light' : '🌙 Dark'}
+        </button>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center w-full max-w-md">
@@ -79,26 +103,34 @@ export default function WomenSafetyApp() {
           <div className="absolute inset-0 bg-red-500 rounded-full animate-ping opacity-20"></div>
           <button 
             onClick={triggerSOS}
-            className="relative w-64 h-64 bg-red-600 rounded-full border-[12px] border-red-100 shadow-2xl active:scale-95 transition-all flex items-center justify-center"
+            className={`relative w-64 h-64 rounded-full border-[12px] shadow-2xl active:scale-95 transition-all flex items-center justify-center
+              ${darkMode ? 'bg-red-700 border-slate-800' : 'bg-red-600 border-red-100'}`}
           >
             <span className="text-white text-6xl font-black">SOS</span>
           </button>
         </div>
 
         {/* TRUSTED CONTACT AREA */}
-        <div className="w-full bg-white p-4 rounded-3xl shadow-md border border-slate-100 mb-6">
+        <div className={`w-full p-4 rounded-3xl shadow-md border mb-6 transition-colors
+          ${darkMode ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-100'}`}>
           {!showInput ? (
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Target Contact:</p>
-                <p className="font-bold text-slate-800">{trustedNumber || "No Number Set"}</p>
+                <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Target Contact:</p>
+                <p className="font-bold">{trustedNumber || "No Number Set"}</p>
               </div>
-              <button onClick={() => setShowInput(true)} className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold uppercase">Edit</button>
+              <button onClick={() => setShowInput(true)} className="text-blue-500 text-xs font-bold uppercase">Edit</button>
             </div>
           ) : (
             <div className="flex gap-2">
-              <input type="tel" placeholder="Enter Number" value={trustedNumber} onChange={(e) => setTrustedNumber(e.target.value)} className="flex-1 bg-slate-100 p-3 rounded-xl font-bold outline-none" />
-              <button onClick={saveContact} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest">Save</button>
+              <input 
+                type="tel" 
+                placeholder="Enter Number" 
+                value={trustedNumber} 
+                onChange={(e) => setTrustedNumber(e.target.value)} 
+                className={`flex-1 p-3 rounded-xl font-bold outline-none ${darkMode ? 'bg-slate-800 text-white' : 'bg-slate-100'}`} 
+              />
+              <button onClick={saveContact} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase">Save</button>
             </div>
           )}
         </div>
@@ -107,21 +139,23 @@ export default function WomenSafetyApp() {
         <div className="w-full grid grid-cols-2 gap-4 mb-6">
           <button 
             onClick={clearSOS}
-            className="bg-green-500 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-green-600 active:scale-95 transition-all text-sm uppercase tracking-tighter"
+            className="bg-green-500 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-green-600 active:scale-95 transition-all text-sm uppercase"
           >
             ✅ I AM SAFE
           </button>
           
           <a 
             href="tel:112"
-            className="bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-black active:scale-95 transition-all text-sm uppercase tracking-tighter flex items-center justify-center"
+            className={`py-4 rounded-2xl font-bold shadow-lg active:scale-95 transition-all text-sm uppercase flex items-center justify-center
+              ${darkMode ? 'bg-white text-black' : 'bg-slate-900 text-white'}`}
           >
             🚨 CALL 112
           </a>
         </div>
 
-        <div className="w-full bg-slate-200 p-3 rounded-2xl text-center">
-          <p className="text-sm font-bold text-slate-600">{status}</p>
+        <div className={`w-full p-3 rounded-2xl text-center transition-colors
+          ${darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-600'}`}>
+          <p className="text-sm font-bold">{status}</p>
         </div>
       </div>
     </main>
