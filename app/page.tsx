@@ -9,12 +9,9 @@ export default function WomenSafetyApp() {
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
   const [battery, setBattery] = useState<number | null>(null);
   const [userId] = useState(() => "User-" + Math.floor(1000 + Math.random() * 9000));
-  
-  // Trusted Contact State
   const [trustedNumber, setTrustedNumber] = useState("");
   const [showInput, setShowInput] = useState(false);
 
-  // Load number from phone memory
   useEffect(() => {
     const savedNumber = localStorage.getItem("shesafe_contact");
     if (savedNumber) setTrustedNumber(savedNumber);
@@ -39,32 +36,27 @@ export default function WomenSafetyApp() {
       setShowInput(true);
       return;
     }
-
     setStatus("Fetching Location...");
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const { latitude, longitude } = pos.coords;
-          const currentBattery = battery || 100;
-          
           setLocation({ lat: latitude, lng: longitude });
           setStatus("ALERT SENT!");
           
-          // 1. Update Firebase
           set(ref(db, `alerts/${userId}`), {
             location: { lat: latitude, lng: longitude },
             status: "EMERGENCY",
             time: new Date().toLocaleString(),
-            battery: currentBattery,
+            battery: battery || 100,
             userId: userId
           });
 
-          // 2. Open SMS App
-          const mapLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
-          const message = `🚨 SOS! I need help. My live location: ${mapLink}. Battery: ${currentBattery}%`;
+          const mapLink = `http://maps.google.com/?q=${latitude},${longitude}`;
+          const message = `🚨 SOS! I need help. My live location: ${mapLink}. Battery: ${battery}%`;
           window.location.href = `sms:${trustedNumber}?body=${encodeURIComponent(message)}`;
         },
-        () => setStatus("Error: Please enable GPS")
+        () => setStatus("Error: Enable GPS")
       );
     }
   };
@@ -93,46 +85,40 @@ export default function WomenSafetyApp() {
           </button>
         </div>
 
-        {/* TRUSTED CONTACT AREA (Directly near SOS) */}
-        <div className="w-full bg-white p-4 rounded-3xl shadow-md border border-slate-100 mb-4">
+        {/* TRUSTED CONTACT AREA */}
+        <div className="w-full bg-white p-4 rounded-3xl shadow-md border border-slate-100 mb-6">
           {!showInput ? (
             <div className="flex justify-between items-center">
               <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase">Sending SMS to:</p>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Target Contact:</p>
                 <p className="font-bold text-slate-800">{trustedNumber || "No Number Set"}</p>
               </div>
-              <button 
-                onClick={() => setShowInput(true)}
-                className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold"
-              >
-                {trustedNumber ? "CHANGE" : "ADD CONTACT"}
-              </button>
+              <button onClick={() => setShowInput(true)} className="bg-blue-50 text-blue-600 px-4 py-2 rounded-xl text-xs font-bold uppercase">Edit</button>
             </div>
           ) : (
             <div className="flex gap-2">
-              <input 
-                type="tel"
-                placeholder="Enter Number"
-                value={trustedNumber}
-                onChange={(e) => setTrustedNumber(e.target.value)}
-                className="flex-1 bg-slate-100 p-3 rounded-xl font-bold outline-none focus:ring-2 ring-blue-400"
-              />
-              <button 
-                onClick={saveContact}
-                className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold"
-              >
-                SAVE
-              </button>
+              <input type="tel" placeholder="Enter Number" value={trustedNumber} onChange={(e) => setTrustedNumber(e.target.value)} className="flex-1 bg-slate-100 p-3 rounded-xl font-bold outline-none" />
+              <button onClick={saveContact} className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest">Save</button>
             </div>
           )}
         </div>
 
-        <button 
-          onClick={clearSOS}
-          className="w-full bg-green-500 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-green-600 active:scale-95 transition-all mb-4"
-        >
-          ✅ I AM SAFE
-        </button>
+        {/* EMERGENCY ACTION BUTTONS */}
+        <div className="w-full grid grid-cols-2 gap-4 mb-6">
+          <button 
+            onClick={clearSOS}
+            className="bg-green-500 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-green-600 active:scale-95 transition-all text-sm uppercase tracking-tighter"
+          >
+            ✅ I AM SAFE
+          </button>
+          
+          <a 
+            href="tel:112"
+            className="bg-slate-900 text-white py-4 rounded-2xl font-bold shadow-lg hover:bg-black active:scale-95 transition-all text-sm uppercase tracking-tighter flex items-center justify-center"
+          >
+            🚨 CALL 112
+          </a>
+        </div>
 
         <div className="w-full bg-slate-200 p-3 rounded-2xl text-center">
           <p className="text-sm font-bold text-slate-600">{status}</p>
