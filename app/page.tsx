@@ -112,12 +112,12 @@ export default function WomenSafetyApp() {
 
         {/* EMERGENCY ACTIONS */}
         <div className="w-full grid grid-cols-2 gap-4 mb-6">
-          <a href="tel:100" className="bg-blue-900 text-white py-4 rounded-2xl font-black text-center shadow-lg">🚨 POLICE (100)</a>
-          <a href="tel:112" className="bg-slate-800 text-white py-4 rounded-2xl font-black text-center shadow-lg">🛡️ HELPLINE (112)</a>
+          <a href="tel:100" className="bg-blue-900 text-white py-4 rounded-2xl font-black text-center shadow-lg"> POLICE (100)</a>
+          <a href="tel:112" className="bg-slate-800 text-white py-4 rounded-2xl font-black text-center shadow-lg"> HELPLINE (112)</a>
         </div>
 
         <button onClick={() => set(ref(db, `alerts/${userId}`), null)} className="w-full bg-green-500 text-white py-4 rounded-2xl font-bold mb-4">
-          ✅ I AM SAFE
+           I AM SAFE
         </button>
 
         <div className={`w-full p-3 rounded-2xl text-center text-sm font-bold ${darkMode ? 'bg-slate-800' : 'bg-slate-200'}`}>
